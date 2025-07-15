@@ -1,23 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { prisma } from './prisma/client';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 4000;
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get('/', async (_, res) => {
-  res.json({ message: '✅ CMS backend with TypeScript + Prisma is running' });
-});
+app.use('/auth', authRoutes);
 
-// Start server
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running at http://localhost:${PORT}`);
+  console.log(`✅ Server listening on http://localhost:${PORT}`);
 });
