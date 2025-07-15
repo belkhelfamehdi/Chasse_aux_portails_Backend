@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Utilisateur {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     Role
+  villes   Ville[] @relation("AdminDesVilles")
+}
+
+model Ville {
+  id        Int      @id @default(autoincrement())
+  nom       String
+  latitude  Float
+  longitude Float
+  rayon     Int
+  adminId   Int?
+  admin     Utilisateur? @relation("AdminDesVilles", fields: [adminId], references: [id])
+  pois      POI[]
+}
+
+model POI {
+  id          Int     @id @default(autoincrement())
+  nom         String
+  description String
+  latitude    Float
+  longitude   Float
+  iconUrl     String
+  modelUrl    String
+  villeId     Int
+  ville       Ville   @relation(fields: [villeId], references: [id])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
