@@ -5,6 +5,7 @@ interface AuthRequest extends Request {
     user?: any;
 }
 
+// Middleware pour l'authentification et la vérification des rôles
 const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ error: 'No token provided' });

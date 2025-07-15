@@ -1,55 +1,113 @@
-import { Request, Response } from "express";
-import { prisma } from "../prisma/client";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/token';
+import { prisma } from '../prisma/client';
+import bcrypt from 'bcrypt';
+import { Request, Response } from 'express';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+export const login = async (req: Request, res: Response) => {
+    const {email, password} = req.body;
+
+    if (!email || !password) return res.status(400).json({ error: "L'email et mot e passe sont obligatoires" });
+
+    try {
+        const user = await prisma.utilisateur.findUnique({
+            where: { email }
+        })
+
+        if (!user) return res.status(404).json({ error: "Email Incorrect" });
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) return res.status(401).json({ error: 'Mot de passe incorrect' });
+
+        const payload = { id: user.id, email: user.email, role: user.role };
+        const accessToken = generateAccessToken(payload)
+        const refreshToken = generateRefreshToken(payload);
+
+        res
+            .cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            })
+            .json({
+                accessToken,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+
+    }catch (error) {
+        console.error('Login error:', error);
+        return res.status(500).json({ error: 'Une erreur est survenue lors de la connexion' });
+    }
+}
 
 export const register = async (req: Request, res: Response) => {
     const { email, password, role } = req.body;
 
-    if (!email || !password || !role) {
-        return res
-            .status(400)
-            .json({ error: "email, password and role are required" });
+    if (!email || !password) return res.status(400).json({ error: "L'email et mot de passe sont obligatoires" });
+
+    try {
+        const existingUser = await prisma.utilisateur.findUnique({
+            where: { email }
+        });
+
+        if (existingUser) return res.status(409).json({ error: 'Email déjà utilisé' });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = await prisma.utilisateur.create({
+            data: {
+                email,
+                password: hashedPassword,
+                role: role || 'USER'
+            }
+        });
+
+        res.status(201).json({
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.role
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        return res.status(500).json({ error: 'Une erreur est survenue lors de l\'inscription' });
     }
+}
 
-    const existingUser = await prisma.utilisateur.findUnique({
-        where: { email },
-    });
-    if (existingUser)
-        return res.status(400).json({ error: "Email already in use" });
+export const logout = (req: Request, res: Response) => {
+    res
+        .clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'strict'
+        })
+        .json({ message: 'Déconnexion réussie' });
+}
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+export const refresh = async (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
 
-    const newUser = await prisma.utilisateur.create({
-        data: {
-            email,
-            password: hashedPassword,
-            role,
-        },
-    });
+    if (!refreshToken) return res.status(401).json({ error: 'No refresh token provided' });
 
-    res.status(201).json({ message: "User created", id: newUser.id });
-};
+    try{
+        const decoded: any = verifyRefreshToken(refreshToken);
+        
+        const user = await prisma.utilisateur.findUnique({
+            where: { id: decoded.id }
+        })
 
-export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+        if (!user) return res.status(403).json({ error: 'Invalid token' });
 
-    const user = await prisma.utilisateur.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+        const newAccessToken = generateAccessToken({ id: user.id, email: user.email, role: user.role });
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
+        res.json({ accessToken: newAccessToken });
 
-    const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: "7d" }
-    );
-
-    res.json({
-        token,
-        user: { id: user.id, email: user.email, role: user.role },
-    });
-};
+    }catch (error) {
+        console.error('Refresh token verification error:', error);
+        return res.status(403).json({ error: 'Invalid refresh token' });
+    }
+}
