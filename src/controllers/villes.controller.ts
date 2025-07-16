@@ -44,3 +44,38 @@ export const createVille = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'An error occurred while creating the city' });
     }
 }
+
+export const updateVille = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { nom, latitude, longitude, rayon } = req.body;
+
+    try {
+        const updatedVille = await prisma.ville.update({
+            where: { id: Number(id) },
+            data: {
+                nom,
+                latitude,
+                longitude,
+                rayon
+            }
+        });
+        res.status(200).json(updatedVille);
+    } catch (error) {
+        console.error('Error updating city:', error);
+        res.status(500).json({ error: 'An error occurred while updating the city' });
+    }
+}
+
+export const deleteVille = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        await prisma.ville.delete({
+            where: { id: Number(id) }
+        });
+        res.status(204).send();
+    } catch (error) {
+        console.error('Error deleting city:', error);
+        res.status(500).json({ error: 'An error occurred while deleting the city' });
+    }
+}
