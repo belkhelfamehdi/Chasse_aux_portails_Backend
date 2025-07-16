@@ -6,7 +6,7 @@ interface AuthRequest extends Request {
 }
 
 // Middleware pour l'authentification et la vérification des rôles
-const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ error: 'No token provided' });
 
@@ -21,7 +21,7 @@ const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     }
 };
 
-const requireRole = (role: 'SUPER_ADMIN' | 'ADMIN') => {
+export const requireRole = (role: 'SUPER_ADMIN' | 'ADMIN') => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
         if (req.user?.role !== role) {
             return res.status(403).json({ error: 'Insufficient permissions' });
@@ -29,5 +29,3 @@ const requireRole = (role: 'SUPER_ADMIN' | 'ADMIN') => {
         next();
     };
 };
-
-module.exports = { authenticate, requireRole };
