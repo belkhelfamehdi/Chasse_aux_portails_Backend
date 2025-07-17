@@ -21,9 +21,9 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     }
 };
 
-export const requireRole = (role: 'SUPER_ADMIN' | 'ADMIN') => {
+export const requireRole = (roles: Array<'SUPER_ADMIN' | 'ADMIN'>) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (req.user?.role !== role) {
+        if (!req.user || !roles.includes(req.user.role)) {
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
         next();

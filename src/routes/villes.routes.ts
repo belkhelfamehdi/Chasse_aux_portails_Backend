@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middlewares/auth.middleware';
-import {  getVilles, createVille } from '../controllers/villes.controller';
+import {  getVilles, getVillesByAdmin, createVille } from '../controllers/villes.controller';
 
 const router = Router();
 
 router.use(authenticate);
-router.use(requireRole('SUPER_ADMIN'));
 
+router.get('/', requireRole(['SUPER_ADMIN']), getVilles);
+router.post('/create', requireRole(['SUPER_ADMIN']), createVille);
+router.get('/admin', requireRole(['ADMIN', 'SUPER_ADMIN']), getVillesByAdmin);
 
-router.get('/', getVilles);
-router.post('/create', createVille);
 
 export default router;

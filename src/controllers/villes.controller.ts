@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma/client';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    role: string;
+  };
+}
+
 export const getVilles = async (req: Request, res: Response) => {
     try {
         // fetching cities from a database
@@ -20,6 +27,29 @@ export const getVilles = async (req: Request, res: Response) => {
         console.error('Error fetching cities:', error);
         res.status(500).json({ error: 'An error occurred while fetching cities' });
     }
+}
+
+export const getVillesByAdmin = async (req: AuthenticatedRequest, res: Response) => {
+    const adminId = req.user?.id;
+    
+    if (!adminId) return res.status(400).json({ error: 'Admin ID is required' });
+    
+    try {
+        const villes = await prisma.ville.findMany({
+            where: {
+                adminId: adminId
+            }
+        });
+
+        if (villes.length === 0) return res.status(404).json({ error: 'No cities found for this admin' });
+
+        res.status(200).json(villes);
+            
+    }catch (error) {
+        console.error('Error fetching cities by admin:', error);
+        return res.status(500).json({ error: 'An error occurred while fetching cities for the admin' });
+    }
+
 }
 
 export const createVille = async (req: Request, res: Response) => {
