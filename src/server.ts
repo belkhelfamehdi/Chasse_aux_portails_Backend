@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
-import villesRoutes from './routes/villes.routes';
+import citiesRoutes from './routes/cities.routes';
 
 dotenv.config();
 const app = express();
@@ -14,7 +14,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 
 app.use('/api/auth', authRoutes);
-app.use('/api/villes', villesRoutes);
+app.use('/api/villes', citiesRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

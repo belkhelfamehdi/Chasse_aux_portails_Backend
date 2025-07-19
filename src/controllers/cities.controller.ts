@@ -8,7 +8,7 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const getVilles = async (req: Request, res: Response) => {
+export const getCities = async (req: Request, res: Response) => {
     try {
         // fetching cities from a database
         const villes = await prisma.ville.findMany({
@@ -29,7 +29,7 @@ export const getVilles = async (req: Request, res: Response) => {
     }
 }
 
-export const getVillesByAdmin = async (req: AuthenticatedRequest, res: Response) => {
+export const getCitiesByAdmin = async (req: AuthenticatedRequest, res: Response) => {
     const adminId = req.user?.id;
     
     if (!adminId) return res.status(400).json({ error: 'Admin ID is required' });
@@ -52,7 +52,7 @@ export const getVillesByAdmin = async (req: AuthenticatedRequest, res: Response)
 
 }
 
-export const createVille = async (req: Request, res: Response) => {
+export const createCity = async (req: Request, res: Response) => {
 
     const { nom, latitude, longitude, rayon, adminId } = req.body;
 
@@ -75,7 +75,7 @@ export const createVille = async (req: Request, res: Response) => {
     }
 }
 
-export const updateVille = async (req: Request, res: Response) => {
+export const updateCity = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nom, latitude, longitude, rayon } = req.body;
 
@@ -96,7 +96,7 @@ export const updateVille = async (req: Request, res: Response) => {
     }
 }
 
-export const deleteVille = async (req: Request, res: Response) => {
+export const deleteCity = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
