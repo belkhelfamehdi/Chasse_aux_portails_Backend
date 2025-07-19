@@ -2,16 +2,16 @@ import { Request, Response } from 'express';
 import { prisma } from '../prisma/client';
 
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    role: string;
-  };
+    user?: {
+        id: number;
+        role: string;
+    };
 }
 
 export const getCities = async (req: Request, res: Response) => {
     try {
         // fetching cities from a database
-        const villes = await prisma.ville.findMany({
+        const villes = await prisma.city.findMany({
             include: {
                 admin: {
                     select: {
@@ -31,11 +31,11 @@ export const getCities = async (req: Request, res: Response) => {
 
 export const getCitiesByAdmin = async (req: AuthenticatedRequest, res: Response) => {
     const adminId = req.user?.id;
-    
+
     if (!adminId) return res.status(400).json({ error: 'Admin ID is required' });
-    
+
     try {
-        const villes = await prisma.ville.findMany({
+        const villes = await prisma.city.findMany({
             where: {
                 adminId: adminId
             }
@@ -44,8 +44,8 @@ export const getCitiesByAdmin = async (req: AuthenticatedRequest, res: Response)
         if (villes.length === 0) return res.status(404).json({ error: 'No cities found for this admin' });
 
         res.status(200).json(villes);
-            
-    }catch (error) {
+
+    } catch (error) {
         console.error('Error fetching cities by admin:', error);
         return res.status(500).json({ error: 'An error occurred while fetching cities for the admin' });
     }
@@ -57,7 +57,7 @@ export const createCity = async (req: Request, res: Response) => {
     const { nom, latitude, longitude, rayon, adminId } = req.body;
 
     try {
-        const newVille = await prisma.ville.create({
+        const newVille = await prisma.city.create({
             data: {
                 nom,
                 latitude,
@@ -80,7 +80,7 @@ export const updateCity = async (req: Request, res: Response) => {
     const { nom, latitude, longitude, rayon } = req.body;
 
     try {
-        const updatedVille = await prisma.ville.update({
+        const updatedVille = await prisma.city.update({
             where: { id: Number(id) },
             data: {
                 nom,
@@ -96,11 +96,48 @@ export const updateCity = async (req: Request, res: Response) => {
     }
 }
 
+export const assignCityToAdmin = async (req: Request, res: Response) => {
+    const { cityId, adminId } = req.body;
+    if (!cityId || !adminId) return res.status(400).json({ error: 'City ID and Admin ID are required' });
+    try {
+        const updatedCity = await prisma.city.update({
+            where: { id: Number(cityId) },
+            data: {
+                admin: {
+                    connect: { id: Number(adminId) }
+                }
+            }
+        });
+        res.status(200).json(updatedCity);
+    } catch (error) {
+        console.error('Error assigning city to admin:', error);
+        res.status(500).json({ error: 'An error occurred while assigning the city to the admin' });
+    }
+}
+
+export const unassignCityFromAdmin = async (req: Request, res: Response) => {
+    const { cityId } = req.params;
+    try {
+        const updatedCity = await prisma.city.update({
+            where: { id: Number(cityId) },
+            data: {
+                admin: {
+                    disconnect: true
+                }
+            }
+        });
+        res.status(200).json(updatedCity);
+    } catch (error) {
+        console.error('Error unassigning city from admin:', error);
+        res.status(500).json({ error: 'An error occurred while unassigning the city from the admin' });
+    }
+}
+
 export const deleteCity = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        await prisma.ville.delete({
+        await prisma.city.delete({
             where: { id: Number(id) }
         });
         res.status(204).send();

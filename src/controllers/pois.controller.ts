@@ -4,7 +4,7 @@ import { prisma } from '../prisma/client';
 export const getPOIs = async (_req: Request, res: Response) => {
     try {
         const pois = await prisma.pOI.findMany({
-            include: { ville: true },
+            include: { city: true },
         });
         res.status(200).json(pois);
     } catch (err) {
@@ -13,7 +13,7 @@ export const getPOIs = async (_req: Request, res: Response) => {
     }
 };
 
-export const getPOI = async (req: Request, res: Response) => {
+export const getPOIById = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     try {
         const poi = await prisma.pOI.findUnique({ where: { id } });
@@ -25,11 +25,23 @@ export const getPOI = async (req: Request, res: Response) => {
     }
 };
 
+export const getPOIsByCity = async (req: Request, res: Response) => {
+    const cityId = Number(req.params.cityId);
+    try {
+        const pois = await prisma.pOI.findMany({ where: { cityId } });
+        if (pois.length === 0) return res.status(404).json({ error: 'No POIs found for this city' });
+        res.json(pois);
+    } catch (err) {
+        console.error('Error fetching POIs by city:', err);
+        res.status(500).json({ error: 'Error fetching POIs by city' });
+    }
+};
+
 export const createPOI = async (req: Request, res: Response) => {
-    const { nom, description, latitude, longitude, iconUrl, modelUrl, villeId } = req.body;
+    const { nom, description, latitude, longitude, iconUrl, modelUrl, cityId } = req.body;
     try {
         const poi = await prisma.pOI.create({
-            data: { nom, description, latitude, longitude, iconUrl, modelUrl, villeId },
+            data: { nom, description, latitude, longitude, iconUrl, modelUrl, cityId },
         });
         res.status(201).json(poi);
     } catch (err) {

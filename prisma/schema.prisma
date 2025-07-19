@@ -12,17 +12,17 @@ model Utilisateur {
   email    String @unique
   password String
   role     Role
-  villes   Ville[] @relation("AdminDesVilles")
+  cities   City[] @relation("AdminDesCities")
 }
 
-model Ville {
+model City {
   id        Int      @id @default(autoincrement())
   nom       String
   latitude  Float
   longitude Float
   rayon     Int
   adminId   Int?
-  admin     Utilisateur? @relation("AdminDesVilles", fields: [adminId], references: [id])
+  admin     Utilisateur? @relation("AdminDesCities", fields: [adminId], references: [id])
   pois      POI[]
 }
 
@@ -34,8 +34,8 @@ model POI {
   longitude   Float
   iconUrl     String
   modelUrl    String
-  villeId     Int
-  ville       Ville   @relation(fields: [villeId], references: [id])
+  cityId     Int
+  city       City   @relation(fields: [cityId], references: [id])
 }
 
 enum Role {
