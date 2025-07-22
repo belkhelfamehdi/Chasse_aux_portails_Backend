@@ -13,11 +13,11 @@ export const login = async (req: Request, res: Response) => {
             where: { email }
         })
 
-        if (!user) return res.status(404).json({ error: "Email Incorrect" });
+        if (!user) return res.status(401).json({ error: 'Identifiants invalides' });
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        if (!isPasswordValid) return res.status(401).json({ error: 'Mot de passe incorrect' });
+        if (!isPasswordValid) return res.status(401).json({ error: 'Identifiants invalides' });
 
         const payload = { id: user.id, email: user.email, role: user.role };
         const accessToken = generateAccessToken(payload)
