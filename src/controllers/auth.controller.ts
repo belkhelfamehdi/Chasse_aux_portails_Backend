@@ -46,9 +46,8 @@ export const login = async (req: Request, res: Response) => {
 }
 
 export const register = async (req: Request, res: Response) => {
-    const { email, password, role } = req.body;
-
-    if (!email || !password) return res.status(400).json({ error: "L'email et mot de passe sont obligatoires" });
+    const { firstname, lastname, email, password, role } = req.body;
+    if (!firstname || !lastname || !email || !password) return res.status(400).json({ error: "Veillez remplir tout les champs" });
 
     try {
         const existingUser = await prisma.utilisateur.findUnique({
@@ -61,6 +60,8 @@ export const register = async (req: Request, res: Response) => {
 
         const newUser = await prisma.utilisateur.create({
             data: {
+                firstname,
+                lastname,
                 email,
                 password: hashedPassword,
                 role: role || 'USER'
@@ -69,6 +70,8 @@ export const register = async (req: Request, res: Response) => {
 
         res.status(201).json({
             id: newUser.id,
+            firstname: newUser.firstname,
+            lastname: newUser.lastname,
             email: newUser.email,
             role: newUser.role
         });

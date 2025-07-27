@@ -3,6 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 
 // Schéma pour l'inscription
 export const registerSchema = z.object({
+  firstname: z.string().min(1, 'Le prénom est requis'),
+  lastname: z.string().min(1, 'Le nom est requis'),
   email: z.email('Email invalide'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
   role: z.enum(['SUPER_ADMIN', 'ADMIN']).optional(),
