@@ -8,9 +8,11 @@ import poisRoutes from './routes/pois.routes';
 
 dotenv.config();
 const app = express();
+const helmet = require('helmet');
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json());
+app.use(helmet());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/villes', citiesRoutes);

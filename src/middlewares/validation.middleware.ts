@@ -76,5 +76,5 @@ export const validateParams = (schema: z.ZodSchema<any>) => (req: Request, res: 
 
 // Schéma pour un paramètre id numérique
 export const idParamSchema = z.object({
-  id: z.string().regex(/^[0-9]+$/, 'ID invalide').transform(Number),
+  id: z.string().regex(/^\d+$/, 'ID invalide').transform(Number),
 });
