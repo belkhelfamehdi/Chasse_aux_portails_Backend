@@ -20,21 +20,21 @@ export const loginSchema = z.object({
 export const createPOISchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
   description: z.string().min(1, 'La description est requise'),
-  latitude: z.number('Latitude invalide'),
-  longitude: z.number('Longitude invalide'),
-  iconUrl: z.url('URL de l\'icône invalide'),
-  modelUrl: z.url('URL du modèle invalide'),
-  cityId: z.number('cityId invalide'),
+  latitude: z.union([z.number(), z.string().transform(Number)], { message: 'Latitude invalide' }),
+  longitude: z.union([z.number(), z.string().transform(Number)], { message: 'Longitude invalide' }),
+  iconUrl: z.string().transform(val => val === '' ? undefined : val).optional(),
+  modelUrl: z.string().transform(val => val === '' ? undefined : val).optional(),
+  cityId: z.union([z.number(), z.string().transform(Number)], { message: 'cityId invalide' }),
 });
 
 // Schéma pour la mise à jour d'un POI (cityId non modifiable)
 export const updatePOISchema = z.object({
-  nom: z.string().min(1, 'Le nom est requis'),
-  description: z.string().min(1, 'La description est requise'),
-  latitude: z.number('Latitude invalide'),
-  longitude: z.number('Longitude invalide'),
-  iconUrl: z.url('URL de l\'icône invalide'),
-  modelUrl: z.url('URL du modèle invalide'),
+  nom: z.string().min(1, 'Le nom est requis').optional(),
+  description: z.string().min(1, 'La description est requise').optional(),
+  latitude: z.union([z.number(), z.string().transform(Number)], { message: 'Latitude invalide' }).optional(),
+  longitude: z.union([z.number(), z.string().transform(Number)], { message: 'Longitude invalide' }).optional(),
+  iconUrl: z.string().optional(),
+  modelUrl: z.string().optional(),
 });
 
 // Schéma pour la création d'une City
@@ -43,15 +43,16 @@ export const createCitySchema = z.object({
   latitude: z.number('Latitude invalide'),
   longitude: z.number('Longitude invalide'),
   rayon: z.number('Rayon invalide'),
-  adminId: z.number('adminId invalide'),
+  adminId: z.number('adminId invalide').optional().nullable(),
 });
 
-// Schéma pour la mise à jour d'une City (adminId non modifiable)
+// Schéma pour la mise à jour d'une City
 export const updateCitySchema = z.object({
-  nom: z.string().min(1, 'Le nom est requis'),
-  latitude: z.number('Latitude invalide'),
-  longitude: z.number('Longitude invalide'),
-  rayon: z.number('Rayon invalide'),
+  nom: z.string().min(1, 'Le nom est requis').optional(),
+  latitude: z.number('Latitude invalide').optional(),
+  longitude: z.number('Longitude invalide').optional(),
+  rayon: z.number('Rayon invalide').optional(),
+  adminId: z.number('adminId invalide').optional().nullable(),
 });
 
 // Middleware générique de validation Zod

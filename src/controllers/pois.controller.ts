@@ -39,9 +39,27 @@ export const getPOIsByCity = async (req: Request, res: Response) => {
 
 export const createPOI = async (req: Request, res: Response) => {
     const { nom, description, latitude, longitude, iconUrl, modelUrl, cityId } = req.body;
+    
     try {
+        // Validate that the city exists
+        const cityExists = await prisma.city.findUnique({
+            where: { id: cityId }
+        });
+        
+        if (!cityExists) {
+            return res.status(400).json({ error: 'La ville spécifiée n\'existe pas' });
+        }
+
         const poi = await prisma.pOI.create({
-            data: { nom, description, latitude, longitude, iconUrl, modelUrl, cityId },
+            data: { 
+                nom, 
+                description, 
+                latitude, 
+                longitude, 
+                iconUrl: iconUrl || null,
+                modelUrl: modelUrl || null,
+                cityId 
+            },
         });
         res.status(201).json(poi);
     } catch (err) {
