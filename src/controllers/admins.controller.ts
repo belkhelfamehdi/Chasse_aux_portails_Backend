@@ -4,6 +4,13 @@ import bcrypt from 'bcrypt';
 import fs from 'fs';
 import path from 'path';
 
+const toAbsoluteUrl = (req: Request, url?: string | null) => {
+    if (!url) return undefined;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const origin = `${req.protocol}://${req.get('host')}`;
+    return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 // Get all admins
 export const getAllAdmins = async (req: Request, res: Response) => {
     try {
@@ -27,7 +34,12 @@ export const getAllAdmins = async (req: Request, res: Response) => {
             }
         });
 
-        res.json(admins);
+        const withAbsolute = admins.map(a => ({
+            ...a,
+            profilePictureUrl: toAbsoluteUrl(req, a.profilePictureUrl)
+        }));
+
+        res.json(withAbsolute);
     } catch (error) {
         console.error('Error fetching admins:', error);
         res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des administrateurs' });
@@ -43,7 +55,7 @@ export const getAdminById = async (req: Request, res: Response) => {
     }
 
     try {
-        const admin = await prisma.utilisateur.findUnique({
+    const admin = await prisma.utilisateur.findUnique({
             where: { id: Number(id) },
             select: {
                 id: true,
@@ -67,8 +79,12 @@ export const getAdminById = async (req: Request, res: Response) => {
         if (!admin) {
             return res.status(404).json({ error: 'Administrateur introuvable' });
         }
+        const withAbsolute = {
+            ...admin,
+            profilePictureUrl: toAbsoluteUrl(req, admin.profilePictureUrl)
+        } as any;
 
-        res.json(admin);
+        res.json(withAbsolute);
     } catch (error) {
         console.error('Error fetching admin:', error);
         res.status(500).json({ error: 'Une erreur est survenue lors de la récupération de l\'administrateur' });
@@ -143,7 +159,12 @@ export const createAdmin = async (req: Request, res: Response) => {
             }
         });
 
-        res.status(201).json(newAdmin);
+        const withAbsolute = {
+            ...newAdmin,
+            profilePictureUrl: toAbsoluteUrl(req, newAdmin.profilePictureUrl)
+        } as any;
+
+        res.status(201).json(withAbsolute);
     } catch (error) {
         console.error('Error creating admin:', error);
         res.status(500).json({ error: 'Une erreur est survenue lors de la création de l\'administrateur' });
@@ -219,6 +240,7 @@ const handleCityAssignments = async (adminId: number, cityIds?: number[]) => {
 };
 
 // Update admin
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const updateAdmin = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { firstname, lastname, email, role, cityIds, password } = req.body;
@@ -266,7 +288,7 @@ export const updateAdmin = async (req: Request, res: Response) => {
                     fs.unlink(absolute, () => {});
                 } catch {}
             }
-            (updateData as any).profilePictureUrl = pictureUrl;
+            updateData.profilePictureUrl = pictureUrl;
         }
         const updatedAdmin = await prisma.utilisateur.update({
             where: { id: adminId },
@@ -286,8 +308,12 @@ export const updateAdmin = async (req: Request, res: Response) => {
                 }
             }
         });
+        const withAbsolute = {
+            ...updatedAdmin,
+            profilePictureUrl: toAbsoluteUrl(req, updatedAdmin.profilePictureUrl)
+        } as any;
 
-        res.json(updatedAdmin);
+        res.json(withAbsolute);
     } catch (error: any) {
         console.error('Error updating admin:', error);
         if (error?.message?.includes('mot de passe')) {
@@ -320,6 +346,22 @@ export const deleteAdmin = async (req: Request, res: Response) => {
             where: { adminId: Number(id) },
             data: { adminId: null }
         });
+
+        // If admin has a profile picture, delete the file from disk
+        if (existingAdmin.profilePictureUrl) {
+            try {
+                const absolute = path.join(
+                    __dirname,
+                    '..',
+                    '..',
+                    existingAdmin.profilePictureUrl.replace(/^\//, '')
+                );
+                fs.unlink(absolute, () => {});
+            } catch (e) {
+                // Swallow file deletion errors to not block admin deletion
+                console.warn('Failed to delete profile picture on admin delete:', e);
+            }
+        }
 
         // Delete the admin
         await prisma.utilisateur.delete({

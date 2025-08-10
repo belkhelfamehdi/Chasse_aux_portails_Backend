@@ -3,6 +3,13 @@ import { prisma } from '../prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 
+const toAbsoluteUrl = (req: Request, url?: string | null) => {
+    if (!url) return undefined;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const origin = `${req.protocol}://${req.get('host')}`;
+    return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export const login = async (req: Request, res: Response) => {
     const {email, password} = req.body;
 
@@ -35,7 +42,10 @@ export const login = async (req: Request, res: Response) => {
                 user: {
                     id: user.id,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    profilePictureUrl: toAbsoluteUrl(req, user.profilePictureUrl)
                 }
             });
 
@@ -107,7 +117,17 @@ export const refresh = async (req: Request, res: Response) => {
 
         const newAccessToken = generateAccessToken({ id: user.id, email: user.email, role: user.role });
 
-        res.json({ accessToken: newAccessToken });
+    res.json({
+            accessToken: newAccessToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                firstname: user.firstname,
+        lastname: user.lastname,
+        profilePictureUrl: toAbsoluteUrl(req, user.profilePictureUrl)
+            }
+        });
 
     }catch (error) {
         console.error('Refresh token verification error:', error);

@@ -3,6 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import authRoutes from './routes/auth.routes';
 import citiesRoutes from './routes/cities.routes';
 import poisRoutes from './routes/pois.routes';
@@ -10,7 +11,7 @@ import adminsRoutes from './routes/admins.routes';
 
 dotenv.config();
 const app = express();
-const helmet = require('helmet');
+// Security headers
 app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
@@ -19,10 +20,15 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads'), {
+  setHeaders: (res) => {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cities', citiesRoutes);
