@@ -14,6 +14,7 @@ model Utilisateur {
   email    String @unique
   password String
   role     Role
+  profilePictureUrl String?
   cities   City[] @relation("AdminDesCities")
 }
 

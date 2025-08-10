@@ -12,6 +12,7 @@ export const getAllAdmins = async (req: Request, res: Response) => {
                 lastname: true,
                 email: true,
                 role: true,
+                profilePictureUrl: true,
                 cities: {
                     select: {
                         id: true,
@@ -48,6 +49,7 @@ export const getAdminById = async (req: Request, res: Response) => {
                 lastname: true,
                 email: true,
                 role: true,
+                profilePictureUrl: true,
                 cities: {
                     select: {
                         id: true,
@@ -108,13 +110,15 @@ export const createAdmin = async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create admin
-        const newAdmin = await prisma.utilisateur.create({
+    const pictureUrl = (req as any).file ? `/uploads/profile-pictures/${(req as any).file.filename}` : undefined;
+    const newAdmin = await prisma.utilisateur.create({
             data: {
                 firstname,
                 lastname,
                 email,
                 password: hashedPassword,
                 role: role || 'ADMIN',
+        ...(pictureUrl && { profilePictureUrl: pictureUrl }),
                 ...(cityIds && cityIds.length > 0 && {
                     cities: {
                         connect: cityIds.map((id: number) => ({ id }))
@@ -127,6 +131,7 @@ export const createAdmin = async (req: Request, res: Response) => {
                 lastname: true,
                 email: true,
                 role: true,
+        profilePictureUrl: true,
                 cities: {
                     select: {
                         id: true,
@@ -250,6 +255,10 @@ export const updateAdmin = async (req: Request, res: Response) => {
         Object.assign(updateData, cityAssignments);
 
         // Update admin
+        const pictureUrl = (req as any).file ? `/uploads/profile-pictures/${(req as any).file.filename}` : undefined;
+        if (pictureUrl) {
+            (updateData).profilePictureUrl = pictureUrl as any;
+        }
         const updatedAdmin = await prisma.utilisateur.update({
             where: { id: adminId },
             data: updateData,
@@ -259,6 +268,7 @@ export const updateAdmin = async (req: Request, res: Response) => {
                 lastname: true,
                 email: true,
                 role: true,
+                profilePictureUrl: true,
                 cities: {
                     select: {
                         id: true,

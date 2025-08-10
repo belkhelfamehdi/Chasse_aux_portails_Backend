@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -19,6 +20,9 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 app.use(helmet());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cities', citiesRoutes);
