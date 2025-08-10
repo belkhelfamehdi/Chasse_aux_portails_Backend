@@ -25,7 +25,7 @@ const coerceCityIds = z.preprocess((val) => {
 const createAdminSchema = z.object({
     firstname: z.string().min(1, 'Le prénom est obligatoire'),
     lastname: z.string().min(1, 'Le nom est obligatoire'),
-    email: z.string().email({ message: 'Email invalide' }),
+    email: z.email({ message: 'Email invalide' }),
     password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
     role: z.enum(['SUPER_ADMIN', 'ADMIN']).optional(),
     cityIds: coerceCityIds.optional(),
@@ -35,7 +35,7 @@ const createAdminSchema = z.object({
 const updateAdminSchema = z.object({
     firstname: z.string().min(1).optional(),
     lastname: z.string().min(1).optional(),
-    email: z.string().email({ message: 'Email invalide' }).optional(),
+    email: z.email({ message: 'Email invalide' }).optional(),
     password: z.string().min(6).optional(),
     role: z.enum(['SUPER_ADMIN', 'ADMIN']).optional(),
     cityIds: coerceCityIds.optional(),
