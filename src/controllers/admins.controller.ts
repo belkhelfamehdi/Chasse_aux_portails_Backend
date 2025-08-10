@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma/client';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
 
 // Get all admins
 export const getAllAdmins = async (req: Request, res: Response) => {
@@ -229,7 +231,7 @@ export const updateAdmin = async (req: Request, res: Response) => {
         const adminId = Number(id);
         
         // Check if admin exists
-        const existingAdmin = await prisma.utilisateur.findUnique({
+    const existingAdmin = await prisma.utilisateur.findUnique({
             where: { id: adminId }
         });
 
@@ -257,7 +259,14 @@ export const updateAdmin = async (req: Request, res: Response) => {
         // Update admin
         const pictureUrl = (req as any).file ? `/uploads/profile-pictures/${(req as any).file.filename}` : undefined;
         if (pictureUrl) {
-            (updateData).profilePictureUrl = pictureUrl as any;
+            // remove old file if exists
+            if (existingAdmin.profilePictureUrl) {
+                try {
+                    const absolute = path.join(__dirname, '..', '..', existingAdmin.profilePictureUrl.replace(/^\//, ''));
+                    fs.unlink(absolute, () => {});
+                } catch {}
+            }
+            (updateData as any).profilePictureUrl = pictureUrl;
         }
         const updatedAdmin = await prisma.utilisateur.update({
             where: { id: adminId },

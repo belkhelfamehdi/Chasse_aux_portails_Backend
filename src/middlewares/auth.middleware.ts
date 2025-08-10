@@ -23,7 +23,9 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
 export const requireRole = (role: 'SUPER_ADMIN' | 'ADMIN') => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (req.user?.role !== role) {
+    const userRole = req.user?.role;
+    if (!userRole) return res.status(401).json({ error: 'Not authenticated' });
+    if (userRole !== role && userRole !== 'SUPER_ADMIN') {
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
         next();

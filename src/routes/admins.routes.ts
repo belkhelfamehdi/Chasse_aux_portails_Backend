@@ -7,7 +7,7 @@ import {
     deleteAdmin,
     getAdminStats
 } from '../controllers/admins.controller';
-import { authenticate } from '../middlewares/auth.middleware';
+import { authenticate, requireRole } from '../middlewares/auth.middleware';
 import { uploadProfilePicture } from '../middlewares/upload.middleware';
 import { validateBody } from '../middlewares/validation.middleware';
 import { z } from 'zod';
@@ -46,21 +46,21 @@ const updateAdminSchema = z.object({
 router.use(authenticate);
 
 // GET /api/admins - Get all admins
-router.get('/', getAllAdmins);
+router.get('/', requireRole('SUPER_ADMIN'), getAllAdmins);
 
 // GET /api/admins/stats - Get admin statistics
-router.get('/stats', getAdminStats);
+router.get('/stats', requireRole('SUPER_ADMIN'), getAdminStats);
 
 // GET /api/admins/:id - Get admin by ID
-router.get('/:id', getAdminById);
+router.get('/:id', requireRole('SUPER_ADMIN'), getAdminById);
 
 // POST /api/admins - Create new admin
-router.post('/', uploadProfilePicture, validateBody(createAdminSchema), createAdmin);
+router.post('/', requireRole('SUPER_ADMIN'), uploadProfilePicture, validateBody(createAdminSchema), createAdmin);
 
 // PUT /api/admins/:id - Update admin
-router.put('/:id', uploadProfilePicture, validateBody(updateAdminSchema), updateAdmin);
+router.put('/:id', requireRole('SUPER_ADMIN'), uploadProfilePicture, validateBody(updateAdminSchema), updateAdmin);
 
 // DELETE /api/admins/:id - Delete admin
-router.delete('/:id', deleteAdmin);
+router.delete('/:id', requireRole('SUPER_ADMIN'), deleteAdmin);
 
 export default router;

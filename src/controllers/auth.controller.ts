@@ -46,7 +46,7 @@ export const login = async (req: Request, res: Response) => {
 }
 
 export const register = async (req: Request, res: Response) => {
-    const { firstname, lastname, email, password, role } = req.body;
+    const { firstname, lastname, email, password } = req.body;
     if (!firstname || !lastname || !email || !password) return res.status(400).json({ error: "Veillez remplir tout les champs" });
 
     try {
@@ -58,13 +58,13 @@ export const register = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await prisma.utilisateur.create({
+    const newUser = await prisma.utilisateur.create({
             data: {
                 firstname,
                 lastname,
                 email,
                 password: hashedPassword,
-                role: role || 'ADMIN'
+        role: 'ADMIN'
             }
         });
 
@@ -85,7 +85,7 @@ export const logout = (req: Request, res: Response) => {
     res
         .clearCookie('refreshToken', {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
         })
         .json({ message: 'Déconnexion réussie' });
