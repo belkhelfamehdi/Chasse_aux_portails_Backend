@@ -61,27 +61,40 @@ export const createPOI = async (req: Request, res: Response) => {
     try {
         // Validate that the city exists
         const cityExists = await prisma.city.findUnique({
-            where: { id: cityId }
+            where: { id: parseInt(cityId) }
         });
         
         if (!cityExists) {
             return res.status(400).json({ error: 'La ville spécifiée n\'existe pas' });
         }
 
-        // Prisma schema définit iconUrl et modelUrl comme String non nullables
-        // Pour éviter une erreur, on utilise une chaîne vide si non fourni
-        const safeIconUrl = (typeof iconUrl === 'string' && iconUrl.trim().length > 0) ? iconUrl : '';
-        const safeModelUrl = (typeof modelUrl === 'string' && modelUrl.trim().length > 0) ? modelUrl : '';
+        // Handle file uploads if present
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        let finalIconUrl = '';
+        let finalModelUrl = '';
+
+        // Use uploaded files if available, otherwise use provided URLs
+        if (files?.iconFile?.[0]) {
+            finalIconUrl = `${req.protocol}://${req.get('host')}/uploads/icons/${files.iconFile[0].filename}`;
+        } else if (typeof iconUrl === 'string' && iconUrl.trim().length > 0) {
+            finalIconUrl = iconUrl.trim();
+        }
+
+        if (files?.modelFile?.[0]) {
+            finalModelUrl = `${req.protocol}://${req.get('host')}/uploads/models/${files.modelFile[0].filename}`;
+        } else if (typeof modelUrl === 'string' && modelUrl.trim().length > 0) {
+            finalModelUrl = modelUrl.trim();
+        }
 
         const poi = await prisma.pOI.create({
             data: { 
                 nom, 
                 description, 
-                latitude, 
-                longitude, 
-                iconUrl: safeIconUrl,
-                modelUrl: safeModelUrl,
-                cityId 
+                latitude: parseFloat(latitude), 
+                longitude: parseFloat(longitude), 
+                iconUrl: finalIconUrl,
+                modelUrl: finalModelUrl,
+                cityId: parseInt(cityId)
             },
             include: { city: true }
         });
@@ -134,9 +147,7 @@ export const deletePOI = async (req: Request, res: Response) => {
     }
     
     try {
-        console.log(`🗑️ Tentative de suppression du POI avec ID: ${id}`);
         await prisma.pOI.delete({ where: { id } });
-        console.log(`✅ POI avec ID ${id} supprimé avec succès`);
         res.status(204).send();
     } catch (err) {
         console.error('❌ Erreur lors de la suppression du POI:', err);
