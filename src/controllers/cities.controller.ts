@@ -228,6 +228,60 @@ export const updateCity = async (req: Request, res: Response) => {
     }
 };
 
+export const updateCityAsAdmin = async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const { nom, latitude, longitude, rayon } = req.body;
+    const adminId = req.user?.id;
+
+    if (!adminId) return res.status(400).json({ error: 'Admin ID is required' });
+
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({ error: 'Invalid city ID' });
+    }
+
+    try {
+        // Vérifier que la ville existe et appartient à cet admin
+        const existingCity = await prisma.city.findFirst({
+            where: { 
+                id: Number(id),
+                adminId: adminId 
+            }
+        });
+
+        if (!existingCity) {
+            return res.status(403).json({ error: 'Vous n\'avez pas l\'autorisation de modifier cette ville' });
+        }
+
+        // Prepare update data (admins ne peuvent pas changer l'adminId)
+        const updateData: any = {};
+        
+        if (nom !== undefined) updateData.nom = nom;
+        if (latitude !== undefined) updateData.latitude = Number(latitude);
+        if (longitude !== undefined) updateData.longitude = Number(longitude);
+        if (rayon !== undefined) updateData.rayon = Number(rayon);
+
+        const updatedVille = await prisma.city.update({
+            where: { id: Number(id) },
+            data: updateData,
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        firstname: true,
+                        lastname: true,
+                        email: true
+                    }
+                }
+            }
+        });
+
+        res.status(200).json(updatedVille);
+    } catch (error) {
+        console.error('Error updating city as admin:', error);
+        res.status(500).json({ error: 'An error occurred while updating the city' });
+    }
+};
+
 export const assignCityToAdmin = async (req: Request, res: Response) => {
     const { cityId, adminId } = req.body;
     
