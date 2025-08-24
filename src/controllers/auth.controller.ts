@@ -2,6 +2,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { prisma } from '../prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
+import { resetLoginAttempts } from '../middlewares/rateLimit.middleware';
 
 const toAbsoluteUrl = (req: Request, url?: string | null) => {
     if (!url) return undefined;
@@ -29,6 +30,9 @@ export const login = async (req: Request, res: Response) => {
         const payload = { id: user.id, email: user.email, role: user.role };
         const accessToken = generateAccessToken(payload)
         const refreshToken = generateRefreshToken(payload);
+
+        // Reset login attempts for this IP on successful authentication
+        resetLoginAttempts(req);
 
         res
             .cookie('refreshToken', refreshToken, {
