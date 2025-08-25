@@ -51,11 +51,21 @@ export const getPOIById = async (req: Request, res: Response) => {
 export const getPOIsByCity = async (req: Request, res: Response) => {
     const cityId = Number(req.params.cityId);
     try {
+        // First check if the city exists
+        const city = await prisma.city.findUnique({
+            where: { id: cityId }
+        });
+        
+        if (!city) {
+            return res.status(404).json({ error: 'City not found' });
+        }
+
         const pois = await prisma.pOI.findMany({ 
             where: { cityId },
             include: { city: true }
         });
-        if (pois.length === 0) return res.status(404).json({ error: 'No POIs found for this city' });
+        
+        // Return empty array if no POIs found (this is valid behavior)
         res.json(pois);
     } catch (err) {
         console.error('Error fetching POIs by city:', err);
