@@ -16,6 +16,12 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Le mot de passe est requis'),
 });
 
+// Schéma pour le changement de mot de passe
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Le mot de passe actuel est requis'),
+  newPassword: z.string().min(6, 'Le nouveau mot de passe doit contenir au moins 6 caractères'),
+});
+
 // Schéma pour la création d'un POI
 export const createPOISchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
